@@ -1,14 +1,14 @@
-/*
-E > '(' >= ')' > T > F 
-由最小的先執行
-*/
+//E > '(' >= ')' > T > F 
+//由最小的先執行
+
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
 
-//宣告函式
+//宣告函式，因為有修改函式的位子
+//如果函式在main以前就不用宣告函式
 void parse(char *str);
 int E();
 int T();
@@ -22,6 +22,7 @@ void genOp2(int i, int i1, char op, int i2);
 int tokenIdx = 0;
 char *tokens;
 
+//main
 int main(int argc, char * argv[]) {
   printf("=== EBNF Grammar =====\n");
   printf("E=T ([+-] T)*\n");

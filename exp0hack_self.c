@@ -1,58 +1,65 @@
+/*
+E > '(' >= ')' > T > F 
+由最小的先執行
+*/
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
 
+//宣告函式
+void parse(char *str);
+int E();
+int T();
+int F();
+char ch();
+char next();
+int nextTemp();
+void genOp1(int i, char c);
+int isNext(char *set);
+void genOp2(int i, int i1, char op, int i2);
 int tokenIdx = 0;
 char *tokens;
 
-int E();
-int F();
-
-void error(char *msg) {
-  printf("%s", msg);
-  assert(0);
+int main(int argc, char * argv[]) {
+  printf("=== EBNF Grammar =====\n");
+  printf("E=T ([+-] T)*\n");
+  printf("T=F ([*/] F)*\n");
+  printf("F=Number | '(' E ')'\n");
+  printf("==== parse:%s ========\n", argv[1]);
+  parse(argv[1]);
 }
 
-char ch() {
-  char c = tokens[tokenIdx];
-  return c;
+void parse(char *str) {
+  tokens = str;
+  E();
 }
 
-char next() {
-  char c = ch();
-  tokenIdx++;
-  return c;
+// E = F ([+-] F)*
+int E() {
+  int i1 = F();
+  while (isNext("+-*/")) {
+    char op=next();
+    int i2 = F();
+    int i = nextTemp();
+    genOp2(i, i1, op, i2);
+    i1 = i;
+  }
+  return i1;
 }
 
-int isNext(char *set) {
-  char c = ch();
-  return (c!='\0' && strchr(set, c)!=NULL);
-}
-
-int nextTemp() {
-  static int tempIdx = 0;
-  return tempIdx++;
-}
-
-void genOp1(int i, char c) {
-  printf("# t%d=%c\n", i, c);
-  // t1=3 轉成 @3; D=A; @t1; M=D
-  printf("@%c\n", c);
-  printf("D=A\n");
-  printf("@t%d\n", i);
-  printf("M=D\n");
-}
-
-void genOp2(int i, int i1, char op, int i2) {
-  printf("# t%d=t%d%ct%d\n", i, i1, op, i2);
-  // t0=t1+t2 轉成 @t1; D=M; @t2; D=D+M; @t0; M=D;
-  printf("@t%d\n", i1);
-  printf("D=M\n");
-  printf("@t%d\n", i2);
-  printf("D=D%cM\n", op);
-  printf("@t%d\n", i);
-  printf("M=D\n");
+// T = F ([*/] F)*
+int T() {
+  int f1 = F();
+  while (isNext("*/")) {
+    char op=next();
+    int f2 = F();
+    int f = nextTemp();
+    genOp2(f, f1, op, f2);
+    f1 = f;
+  }
+  return f1;
 }
 
 // F =  Number | '(' E ')'
@@ -74,43 +81,50 @@ int F() {
   return f; 
 }
 
-// T = F ([*/] F)*
-int T() {
-  int f1 = F();
-  while (isNext("*/")) {
-    char op=next();
-    int f2 = F();
-    int f = nextTemp();
-    genOp2(f, f1, op, f2);
-    f1 = f;
-  }
-  return f1;
+char ch() {
+  char c = tokens[tokenIdx];
+  return c;
 }
 
-
-// E = F ([+-] F)*
-int E() {
-  int i1 = F();
-  while (isNext("+-*/")) {
-    char op=next();
-    int i2 = F();
-    int i = nextTemp();
-    genOp2(i, i1, op, i2);
-    i1 = i;
-  }
-  return i1;
+char next() {
+  char c = ch();
+  tokenIdx++;
+  return c;
 }
 
-void parse(char *str) {
-  tokens = str;
-  E();
+int nextTemp() {
+  static int tempIdx = 0;
+  return tempIdx++;
 }
 
-int main(int argc, char * argv[]) {
-  printf("=== EBNF Grammar =====\n");
-  printf("E=T ([+-] T)*\n");
-  printf("T=F ([*/] F)*\n");
-  printf("F=Number | '(' E ')'\n");
-  printf("==== parse:%s ========\n", argv[1]);
-  parse(argv[1]);
+void genOp1(int i, char c) {
+  printf("# t%d=%c\n", i, c);
+  // t1=3 轉成 @3; D=A; @t1; M=D  
+  printf("@%c\n", c);
+  if(isdigit(c))
+    printf("D=A\n");
+  else
+    printf("D=M\n");
+  printf("@t%d\n", i);
+  printf("M=D\n");
+}
+
+void error(char *msg) {
+  printf("%s", msg);
+  assert(0);
+}
+
+int isNext(char *set) {
+  return (ch()!='\0' && strchr(set, ch())!=NULL);
+}
+
+void genOp2(int i, int i1, char op, int i2) {
+  printf("# t%d=t%d%ct%d\n", i, i1, op, i2);
+  // t0=t1+t2 轉成 @t1; D=M; @t2; D=D+M; @t0; M=D;
+  printf("@t%d\n", i1);
+  printf("D=M\n");
+  printf("@t%d\n", i2);
+  printf("D=D%cM\n", op);
+  printf("@t%d\n", i);
+  printf("M=D\n");
 }
